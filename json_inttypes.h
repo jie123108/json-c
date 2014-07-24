@@ -14,6 +14,7 @@ typedef __int64 int64_t;
 #define INT64_MIN    ((int64_t)_I64_MIN)
 #define INT64_MAX    ((int64_t)_I64_MAX)
 #define PRId64 "I64d"
+#define PRIu64 "I64u"
 #define SCNd64 "I64d"
 
 #else

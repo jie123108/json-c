@@ -10,9 +10,16 @@
 void checkit(const char *buf)
 {
 	int64_t cint64 = -666;
-
-	int retval = json_parse_int64(buf, &cint64);
-	printf("buf=%s parseit=%d, value=%" PRId64 " \n", buf, retval, cint64);
+	uint64_t cuint64 = 666;
+	
+	int uint64_required = 0;
+	int retval = json_parse_int64(buf, &cint64, &uint64_required);
+	if(uint64_required){
+		retval = json_parse_uint64(buf, &cuint64, &uint64_required);
+		printf("buf=%s parseit=%d, uvalue=%" PRIu64 "\n", buf, retval, cuint64);
+	}else{
+		printf("buf=%s parseit=%d, value=%" PRId64 "\n", buf, retval, cint64);
+	}
 }
 
 /**

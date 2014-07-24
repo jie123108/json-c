@@ -98,6 +98,7 @@ typedef enum json_type {
   json_type_object,
   json_type_array,
   json_type_string,
+  json_type_uint,
 } json_type;
 
 /* reference counting functions */
@@ -452,6 +453,8 @@ extern struct json_object* json_object_new_int(int32_t i);
  */
 extern struct json_object* json_object_new_int64(int64_t i);
 
+extern struct json_object* json_object_new_uint64(uint64_t i);
+
 
 /** Get the int value of a json_object
  *
@@ -483,6 +486,7 @@ extern int32_t json_object_get_int(struct json_object *obj);
  * @returns an int64
  */
 extern int64_t json_object_get_int64(struct json_object *obj);
+extern uint64_t json_object_get_uint64(struct json_object *obj);
 
 
 /* double type methods */

@@ -24,7 +24,8 @@ extern "C" {
 extern struct json_object* json_object_from_file(const char *filename);
 extern int json_object_to_file(char *filename, struct json_object *obj);
 extern int json_object_to_file_ext(char *filename, struct json_object *obj, int flags);
-extern int json_parse_int64(const char *buf, int64_t *retval);
+extern int json_parse_int64(const char *buf, int64_t *retval, int* uint64_required);
+extern int json_parse_uint64(const char *buf, uint64_t *retval, int* int64_required);
 extern int json_parse_double(const char *buf, double *retval);
 
 

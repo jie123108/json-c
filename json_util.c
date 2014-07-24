@@ -159,7 +159,7 @@ int json_parse_double(const char *buf, double *retval)
 static void sscanf_is_broken_test()
 {
 	int64_t num64;
-
+	uint64_t num64u;
 	(void)sscanf(" -01234567890123456789012345", "%" SCNd64, &num64);
 	int ret_errno = errno;
 	int is_int64_min = (num64 == INT64_MIN);
@@ -168,15 +168,22 @@ static void sscanf_is_broken_test()
 	int ret_errno2 = errno;
 	int is_int64_max = (num64 == INT64_MAX);
 
+	(void)sscanf(" 01234567890123456789012345", "%" SCNu64, &num64u);
+	int ret_errno3 = errno;
+	int is_uint64_max = (num64u == UINT64_MAX);
+	//printf("########### uint64max: %llu\n", (unsigned long long)num64u);
+	
 	if (ret_errno != ERANGE || !is_int64_min ||
-	    ret_errno2 != ERANGE || !is_int64_max)
+	    ret_errno2 != ERANGE || !is_int64_max ||
+	    ret_errno3 != ERANGE || !is_uint64_max)
 	{
+		//printf("sscanf_is_broken_test failed, enabling workaround code\n");
 		MC_DEBUG("sscanf_is_broken_test failed, enabling workaround code\n");
 		sscanf_is_broken = 1;
 	}
 }
 
-int json_parse_int64(const char *buf, int64_t *retval)
+int json_parse_int64(const char *buf, int64_t *retval, int* uint64_required)
 {
 	int64_t num64;
 	const char *buf_sig_digits;
@@ -199,6 +206,7 @@ int json_parse_int64(const char *buf, int64_t *retval)
 		MC_DEBUG("Failed to parse, sscanf != 1\n");
 		return 1;
 	}
+	//printf("num64: %lld errno: %d\n", (long long )num64, errno);
 
 	saved_errno = errno;
 	buf_sig_digits = buf;
@@ -249,6 +257,11 @@ int json_parse_int64(const char *buf, int64_t *retval)
 		}
 	}
 
+
+	if(!orig_has_neg && saved_errno == ERANGE){
+		*uint64_required = 1;
+	}
+	
 	// Not all sscanf impl's set the value properly when out of range.
 	// Always do this, even for properly functioning implementations,
 	// since it shouldn't slow things down much.
@@ -262,6 +275,80 @@ int json_parse_int64(const char *buf, int64_t *retval)
 	*retval = num64;
 	return 0;
 }
+
+int json_parse_uint64(const char *buf, uint64_t *retval, int* int64_required)
+{
+	int64_t u64;
+	const char *buf_sig_digits;
+	int saved_errno;
+
+	if (!sscanf_is_broken_testdone)
+	{
+		sscanf_is_broken_test();
+		sscanf_is_broken_testdone = 1;
+	}
+
+	// Skip leading spaces
+	while (isspace((int)*buf) && *buf)
+		buf++;
+	if(*buf == '-'){
+		*int64_required = 1;
+		return 0;
+	}
+	
+	errno = 0; // sscanf won't always set errno, so initialize
+	if (sscanf(buf, "%" SCNu64, &u64) != 1)
+	{
+		MC_DEBUG("Failed to parse, sscanf != 1\n");
+		return 1;
+	}
+	//printf("u64: %llu errno: %d\n", (unsigned long long )u64, errno);
+
+	saved_errno = errno;
+	buf_sig_digits = buf;
+	
+	// Not all sscanf implementations actually work
+	if (sscanf_is_broken && saved_errno != ERANGE)
+	{
+		char buf_cmp[100];
+		char *buf_cmp_start = buf_cmp;
+		int buf_cmp_len;
+
+		// Skip leading zeros, but keep at least one digit
+		while (buf_sig_digits[0] == '0' && buf_sig_digits[1] != '\0')
+			buf_sig_digits++;
+
+		snprintf(buf_cmp_start, sizeof(buf_cmp), "%" PRIu64, u64);
+		// No need to skip leading spaces or zeros here.
+
+		buf_cmp_len = strlen(buf_cmp_start);
+		/**
+		 * If the sign is different, or
+		 * some of the digits are different, or
+		 * there is another digit present in the original string
+		 * then we have NOT successfully parsed the value.
+		 */
+		if (strncmp(buf_sig_digits, buf_cmp_start, strlen(buf_cmp_start)) != 0 ||
+			((int)strlen(buf_sig_digits) != buf_cmp_len &&
+			 isdigit((int)buf_sig_digits[buf_cmp_len])
+		    )
+		   )
+		{
+			saved_errno = ERANGE;
+		}
+	}
+
+	// Not all sscanf impl's set the value properly when out of range.
+	// Always do this, even for properly functioning implementations,
+	// since it shouldn't slow things down much.
+	if (saved_errno == ERANGE)
+	{
+		u64 = UINT64_MAX;
+	}
+	*retval = u64;
+	return 0;
+}
+
 
 #ifndef HAVE_REALLOC
 void* rpl_realloc(void* p, size_t n)

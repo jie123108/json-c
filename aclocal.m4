@@ -13,8 +13,8 @@
 
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.68],,
-[m4_warning([this file was generated for autoconf 2.68.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.63],,
+[m4_warning([this file was generated for autoconf 2.63.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically `autoreconf'.])])
@@ -1036,7 +1036,7 @@ m4_defun([_LT_DARWIN_LINKER_FEATURES],
 # to the aix ld manual.
 m4_defun([_LT_SYS_MODULE_PATH_AIX],
 [m4_require([_LT_DECL_SED])dnl
-AC_LINK_IFELSE([AC_LANG_PROGRAM],[
+AC_LINK_IFELSE(AC_LANG_PROGRAM,[
 lt_aix_libpath_sed='
     /Import File Strings/,/^$/ {
 	/^0/ {
@@ -2485,10 +2485,13 @@ linux* | k*bsd*-gnu)
   # before this can be enabled.
   hardcode_into_libs=yes
 
+  # Add ABI-specific directories to the system library path.
+  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
+
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -4841,18 +4844,9 @@ _LT_EOF
 	# implicitly export all symbols.
         save_LDFLAGS="$LDFLAGS"
         LDFLAGS="$LDFLAGS -shared ${wl}-exported_symbol ${wl}foo ${wl}-update_registry ${wl}/dev/null"
-        AC_LINK_IFELSE(
-          [AC_LANG_SOURCE(
-        [AC_LANG_CASE([C], [[int foo (void) { return 0; }]],
-              [C++], [[int foo (void) { return 0; }]],
-              [Fortran 77], [[
-       subroutine foo
-       end]],
-              [Fortran], [[
-       subroutine foo
-       end]])])], [
+        AC_LINK_IFELSE(int foo(void) {},
           _LT_TAGVAR(archive_expsym_cmds, $1)='$CC -shared $libobjs $deplibs $compiler_flags ${wl}-soname ${wl}$soname `test -n "$verstring" && $ECHO "X${wl}-set_version ${wl}$verstring" | $Xsed` ${wl}-update_registry ${wl}${output_objdir}/so_locations ${wl}-exports_file ${wl}$export_symbols -o $lib'
-        ])
+        )
         LDFLAGS="$save_LDFLAGS"
       else
 	_LT_TAGVAR(archive_cmds, $1)='$CC -shared $libobjs $deplibs $compiler_flags -soname $soname `test -n "$verstring" && $ECHO "X-set_version $verstring" | $Xsed` -update_registry ${output_objdir}/so_locations -o $lib'

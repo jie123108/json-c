@@ -608,12 +608,20 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
           printbuf_memappend_fast(tok->pb, case_start, case_len);
       }
       {
-	int64_t num64;
-	double  numd;
-	if (!tok->is_double && json_parse_int64(tok->pb->buf, &num64) == 0) {
-		current = json_object_new_int64(num64);
-	} else if(tok->is_double && json_parse_double(tok->pb->buf, &numd) == 0) {
-          current = json_object_new_double(numd);
+		int64_t num64;
+		double  numd;
+		int uint64_required = 0;
+		if (!tok->is_double && json_parse_int64(tok->pb->buf, &num64, &uint64_required) == 0) {
+			if(uint64_required){
+				uint64_t u64=0;
+				int int64_required = 0;
+				json_parse_uint64(tok->pb->buf, &u64, &int64_required);
+				current = json_object_new_uint64(u64);
+			}else{
+				current = json_object_new_int64(num64);
+			}
+		} else if(tok->is_double && json_parse_double(tok->pb->buf, &numd) == 0) {
+	          current = json_object_new_double(numd);
         } else {
           tok->err = json_tokener_error_parse_number;
           goto out;
